@@ -4,17 +4,17 @@
 
 ## 🔍 검증 방법 및 결과 위치 요약
 
-| 검증 항목 | 수행 및 검증 핵심 코드 / 명령어 | 결과 위치 및 증거 링크 |
-| :--- | :--- | :--- |
-| **라벨 정규화** | `normalize_label()` (`+`/`cross` → `Cross`, `x` → `X`) | [main.py (L10-L16)](./main.py#L10-L16) |
-| **모드 1 입력 검증** | `get_user_input()`, `len(tokens) != size`, `try...except ValueError` | [main.py (L20-L36)](./main.py#L20-L36) |
-| **MAC 연산 (유사도)** | `calculate_mac()` (외부 라이브러리 없이 $N \times N$ 이중 `for`문) | [main.py (L40-L50)](./main.py#L40-L50) |
-| **동점 및 판정 정책** | `judge_winner()`, `abs(score_a - score_b) < 1e-9` (`판정 불가` / `UNDECIDED`) | [main.py (L54-L65)](./main.py#L54-L65) |
-| **성능 측정 (ms)** | `measure_performance()`, `time.perf_counter()` (I/O 제외 반복 측정) | [main.py (L69-L76)](./main.py#L69-L76) |
-| **모드 1 실행 흐름** | 3×3 필터 A/B·패턴 입력, MAC 점수·판정·시간 출력 | [main.py (L92-L110)](./main.py#L92-L110) |
-| **모드 2 JSON 검증** | `json.load()`, 크기($N$) 추출 및 스키마 불일치 방어 | [main.py (L113-L163)](./main.py#L113-L163) |
-| **PASS/FAIL 집계** | `UNDECIDED` 명시적 `FAIL` 처리 및 케이스별 결과 출력 | [main.py (L175-L195)](./main.py#L175-L195) |
-| **성능 표 & 요약 리포트** | 크기별 평균 시간(ms)·연산 횟수($N^2$) 표 및 최종 요약 출력 | [main.py (L206-L220)](./main.py#L206-L220) |
+| 검증 항목 | 수행 및 검증 핵심 코드 / 명령어 | 결과 위치 (README) | 증거 링크 (코드) |
+| :--- | :--- | :--- | :--- |
+| **라벨 정규화** | `normalize_label()` (`+`/`cross` → `Cross`, `x` → `X`) | [2. 구현 요약 - 라벨 정규화](#2-구현-요약) | [main.py (L10-L16)](./main.py#L10-L16) |
+| **모드 1 입력 검증** | `get_user_input()`, `len(tokens) != size`, `try...except ValueError` | [1. 실행 방법 (모드 1)](#1-실행-방법) | [main.py (L20-L36)](./main.py#L20-L36) |
+| **MAC 연산 (유사도)** | `calculate_mac()` (외부 라이브러리 없이 $N \times N$ 이중 `for`문) | [2. 구현 요약 - MAC 점수의 의미](#2-구현-요약) | [main.py (L40-L46)](./main.py#L40-L46) |
+| **동점 및 판정 정책** | `judge_winner()`, `abs(score_a - score_b) < 1e-9` (`판정 불가` / `UNDECIDED`) | [2. 구현 요약 - 동점 처리 정책](#2-구현-요약) | [main.py (L51-L58)](./main.py#L51-L58) |
+| **성능 측정 (ms)** | `measure_performance()`, `time.perf_counter()` (I/O 제외 반복 측정) | [3. 결과 리포트 - 성능 분석](#3-결과-리포트) | [main.py (L62-L69)](./main.py#L62-L69) |
+| **모드 1 실행 흐름** | 3×3 필터 A/B·패턴 입력, MAC 점수·`판정 불가`·시간 출력 | [1. 실행 방법 (모드 1)](#1-실행-방법) | [main.py (L85-L104)](./main.py#L85-L104) |
+| **모드 2 JSON 검증** | `json.load()`, 크기($N$) 추출 및 스키마/크기 불일치 방어 | [3. 결과 리포트 - 실패 원인 분석](#3-결과-리포트) | [main.py (L107-L157)](./main.py#L107-L157) |
+| **PASS/FAIL 집계** | `UNDECIDED` 명시적 `FAIL` 처리 및 케이스별 판정 출력 | [3. 결과 리포트 - 실패 원인 분석](#3-결과-리포트) | [main.py (L171-L195)](./main.py#L171-L195) |
+| **성능 표 & 요약 리포트** | 크기별 평균 시간(ms)·연산 횟수($N^2$) 표 및 최종 요약 출력 | [3. 결과 리포트 - 시간 복잡도 분석](#3-결과-리포트) | [main.py (L203-L216)](./main.py#L203-L216) |
 
 ## 1. 실행 방법 및 환경 점검
 
