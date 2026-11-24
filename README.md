@@ -4,16 +4,17 @@
 
 ## 🔍 검증 방법 및 결과 위치 요약
 
-| 검증 항목 | 수행 및 검증 핵심 코드 / 명령어 | 결과 위치 및 증거 링크 | 
-| ----- | ----- | ----- | 
-| **실행 및 환경 점검** | `python main.py` , `import json, os, time` , `os.path.dirname(__file__)` | [1. 실행 방법 및 환경 점검](#1-실행-방법-및-환경-점검) / [main.py (L1-L3)](./main.py#L1-L3) | 
-| **라벨 정규화** | `normalize_label(label)` , `"+" or "cross" -> "Cross"` , `"x" or "X" -> "X"` | [2. 라벨 정규화 (Standardization)](#2-라벨-정규화-standardization) / [main.py (L10-L16)](./main.py#L10-L16) | 
-| **모드 1 입력 검증** | `get_user_input(name)` , `line.split()` , `if len(tokens) != 3:` , `try...except ValueError` | [3. 모드 1: 사용자 입력 및 예외 방어](#3-모드-1-사용자-입력-및-예외-방어) / [main.py (L19-L35)](./main.py#L19-L35) | 
-| **MAC 연산 구현** | `calculate_mac(pattern, filter_grid)` , `for i in range(3):` , `total += pattern[i][j] * filter_grid[i][j]` | [4. MAC 연산 직접 구현](#4-mac-연산-직접-구현) / [main.py (L38-L43)](./main.py#L38-L43) | 
-| **동점 처리 정책** | `judge_winner(score_cross, score_x)` , `epsilon = 0.000000001` , `abs(score_cross - score_x)` | [5. 부동소수점 비교 및 동점 정책](#5-부동소수점-비교-및-동점-정책) / [main.py (L46-L54)](./main.py#L46-L54) | 
-| **JSON 로드 및 검증** | `with open(file_path, 'r', encoding='utf-8')` , `json.load(f)` , `data["pattern"]` , `data["expected"]` | [6. 모드 2: JSON 로드 및 데이터 검증](#6-모드-2-json-로드-및-데이터-검증) / [main.py (L89-L98)](./main.py#L89-L98) | 
-| **성능 측정 (타이머)** | `time.perf_counter()` , `for _ in range(100):` , `avg_time_ms` | [7. MAC 연산 시간 측정](#7-mac-연산-시간-측정) / [main.py (L100-L108)](./main.py#L100-L108) | 
-| **결과 및 복잡도 리포트** | `if expected_answer == npu_result:` , $O(N^2)$ 시간 복잡도 및 원인 분석 | [8. 결과 리포트 (원인 분석 및 시간 복잡도)](#8-결과-리포트-원인-분석-및-시간-복잡도) / [main.py (L110-L119)](./main.py#L110-L119) | 
+| 검증 항목 | 수행 및 검증 핵심 코드 / 명령어 | 결과 위치 및 증거 링크 |
+| :--- | :--- | :--- |
+| **라벨 정규화** | `normalize_label()` (`+`/`cross` → `Cross`, `x` → `X`) | [main.py (L10-L16)](./main.py#L10-L16) |
+| **모드 1 입력 검증** | `get_user_input()`, `len(tokens) != size`, `try...except ValueError` | [main.py (L20-L36)](./main.py#L20-L36) |
+| **MAC 연산 (유사도)** | `calculate_mac()` (외부 라이브러리 없이 $N \times N$ 이중 `for`문) | [main.py (L40-L50)](./main.py#L40-L50) |
+| **동점 및 판정 정책** | `judge_winner()`, `abs(score_a - score_b) < 1e-9` (`판정 불가` / `UNDECIDED`) | [main.py (L54-L65)](./main.py#L54-L65) |
+| **성능 측정 (ms)** | `measure_performance()`, `time.perf_counter()` (I/O 제외 반복 측정) | [main.py (L69-L76)](./main.py#L69-L76) |
+| **모드 1 실행 흐름** | 3×3 필터 A/B·패턴 입력, MAC 점수·판정·시간 출력 | [main.py (L92-L110)](./main.py#L92-L110) |
+| **모드 2 JSON 검증** | `json.load()`, 크기($N$) 추출 및 스키마 불일치 방어 | [main.py (L113-L163)](./main.py#L113-L163) |
+| **PASS/FAIL 집계** | `UNDECIDED` 명시적 `FAIL` 처리 및 케이스별 결과 출력 | [main.py (L175-L195)](./main.py#L175-L195) |
+| **성능 표 & 요약 리포트** | 크기별 평균 시간(ms)·연산 횟수($N^2$) 표 및 최종 요약 출력 | [main.py (L206-L220)](./main.py#L206-L220) |
 
 ## 1. 실행 방법 및 환경 점검
 
