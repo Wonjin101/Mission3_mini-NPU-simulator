@@ -47,10 +47,11 @@ def calculate_mac(pattern, filter_grid):
 
 
 # 4) 부동소수점 허용오차(epsilon) 기반 판정 함수
-def judge_winner(score_a, score_b, label_a="Cross", label_b="X"):
+# [보완 1] 모드별 동점 출력 라벨(tie_label) 분리 지원
+def judge_winner(score_a, score_b, label_a="Cross", label_b="X", tie_label="UNDECIDED"):
     epsilon = 1e-9  # 0.000000001
     if abs(score_a - score_b) < epsilon:
-        return "UNDECIDED"
+        return tie_label
     elif score_a > score_b:
         return label_a
     else:
@@ -64,7 +65,6 @@ def measure_performance(pattern, filter_a, filter_b, iterations=10):
         calculate_mac(pattern, filter_a)
         calculate_mac(pattern, filter_b)
     end_time = time.perf_counter()
-    # 1회 MAC 연산 기준 평균 시간(ms) 계산
     avg_time_ms = ((end_time - start_time) / (iterations * 2)) * 1000
     return avg_time_ms
 
@@ -91,7 +91,10 @@ def main():
 
         score_a = calculate_mac(student_pattern, filter_a)
         score_b = calculate_mac(student_pattern, filter_b)
-        npu_result = judge_winner(score_a, score_b, label_a="A", label_b="B")
+        # [보완 1] 모드 1 요구사항에 맞춰 동점 시 "판정 불가" 출력
+        npu_result = judge_winner(
+            score_a, score_b, label_a="A", label_b="B", tie_label="판정 불가"
+        )
         avg_time_ms = measure_performance(student_pattern, filter_a, filter_b, iterations=100)
 
         print("\n--- 채점 및 성능 결과 ---")
@@ -124,18 +127,16 @@ def main():
         pass_count = 0
         fail_count = 0
         fail_cases = []
-        perf_records = {}  # 크기별 성능 기록용
+        perf_records = {}
 
         print("\n--- 케이스별 NPU 검사 결과 ---")
         for case_key, case_info in patterns_data.items():
             total_count += 1
             try:
-                # 1) 키에서 크기(N) 추출 (예: "size_5_1" -> 5)
                 parts = case_key.split("_")
                 n = int(parts[1])
                 size_key = f"size_{n}"
 
-                # 2) 필터 존재 여부 및 정규화 매핑 확인
                 if size_key not in filters_data:
                     raise ValueError(f"해당 크기({size_key})의 필터가 data.json에 없습니다.")
 
@@ -150,31 +151,38 @@ def main():
                 student_pattern = case_info["input"]
                 expected_answer = normalize_label(case_info["expected"])
 
-                # 3) 스키마 및 배열 크기 일치 검증
                 if len(student_pattern) != n or any(len(row) != n for row in student_pattern):
                     raise ValueError(f"패턴 크기가 {n}x{n}과 일치하지 않습니다.")
                 if len(cross_filter) != n or len(x_filter) != n:
                     raise ValueError(f"필터 크기가 {n}x{n}과 일치하지 않습니다.")
 
-                # 4) MAC 연산 및 판정
                 cross_score = calculate_mac(student_pattern, cross_filter)
                 x_score = calculate_mac(student_pattern, x_filter)
-                npu_result = judge_winner(cross_score, x_score, label_a="Cross", label_b="X")
+                npu_result = judge_winner(
+                    cross_score, x_score, label_a="Cross", label_b="X", tie_label="UNDECIDED"
+                )
 
-                # 5) 크기별 첫 정상 케이스에 대해 성능 측정 (최소 10회 이상 반복)
                 if n not in perf_records:
                     perf_records[n] = measure_performance(
                         student_pattern, cross_filter, x_filter, iterations=100
                     )
 
-                # 6) PASS / FAIL 판별
-                if npu_result == expected_answer:
+                # [보완 2] UNDECIDED는 명시적으로 FAIL로 집계
+                if npu_result == "UNDECIDED":
+                    status = "FAIL"
+                    fail_count += 1
+                    fail_cases.append(
+                        (case_key, f"동점 판정 불가(UNDECIDED)로 인한 FAIL 처리 (예상값: {expected_answer})")
+                    )
+                elif npu_result == expected_answer:
                     status = "PASS"
                     pass_count += 1
                 else:
                     status = "FAIL"
                     fail_count += 1
-                    fail_cases.append((case_key, f"예상값({expected_answer}) != 판정값({npu_result})"))
+                    fail_cases.append(
+                        (case_key, f"예상값({expected_answer}) != 판정값({npu_result})")
+                    )
 
                 print(
                     f"[{case_key}] Cross: {cross_score:.2f} | X: {x_score:.2f} "
@@ -186,21 +194,18 @@ def main():
                 fail_cases.append((case_key, f"데이터/스키마 오류: {e}"))
                 print(f"[{case_key}] -> FAIL (사유: {e})")
 
-        # 3x3 기본 성능도 표에 함께 포함하기 위해 측정
         if 3 not in perf_records:
             sample_3 = [[0, 1, 0], [1, 1, 1], [0, 1, 0]]
             filter_3_a = [[0, 1, 0], [1, 1, 1], [0, 1, 0]]
             filter_3_b = [[1, 0, 1], [0, 1, 0], [1, 0, 1]]
             perf_records[3] = measure_performance(sample_3, filter_3_a, filter_3_b, iterations=100)
 
-        # --- 성능 분석 표 출력 ---
         print("\n--- 크기별 MAC 연산 성능 분석 ---")
         print(f"{'크기 (N×N)':<12} | {'평균 시간 (ms)':<16} | {'연산 횟수 (N²)':<12}")
         print("-" * 46)
         for n in sorted(perf_records.keys()):
             print(f"{f'{n}×{n}':<12} | {perf_records[n]:<16.6f} | {n * n:<12}")
 
-        # --- 최종 요약 리포트 출력 ---
         print("\n--- 최종 테스트 요약 리포트 ---")
         print(f"전체 테스트 수: {total_count} | 통과(PASS): {pass_count} | 실패(FAIL): {fail_count}")
         if fail_cases:
